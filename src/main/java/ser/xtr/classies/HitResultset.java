@@ -17,7 +17,7 @@ public class HitResultset {
     String where;
     String sort;
     int maxHits = 0;
-    IDocumentHitList hits = new IDocumentHitList();
+    IDocumentHitList hits;
     public
     HitResultset() throws Exception {
         load();
@@ -73,9 +73,7 @@ public class HitResultset {
             que.setOrderByExpression(oexr);
         }
 
-        IDocumentHitList hits = que.getSession() != null? que.getSession().getDocumentServer().query(que, que.getSession()): null;
-        if(hits == null) return null;
-        else return hits.getInformationObjects();
+        hits = (que.getSession() != null ? que.getSession().getDocumentServer().query(que, que.getSession()) : null);
     }
     public static HitResultset
     init() throws Exception {

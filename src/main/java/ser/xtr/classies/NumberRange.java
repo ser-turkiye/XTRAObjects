@@ -20,8 +20,15 @@ public class NumberRange{
     IStringMatrix matrix;
     JSONObject numberRanges;
     AutoText autoText;
-    public
-    NumberRange() throws Exception {
+
+    int columnName = 0;
+    int columnPattern = 1;
+    int columnStart = 2;
+    int columnId = 2;
+    public NumberRange() throws Exception {
+        load();
+    }
+    public void load() throws Exception {
         session = XTRObjects.getSession();
         if(session == null){throw new Exception("Please set session with XTRObjects.init function.");}
 
@@ -38,17 +45,17 @@ public class NumberRange{
         int lcnt = (-1);
         for(List<String> line : rmtx) {
             lcnt++;
-            String ixnm = (line.size() > 0 && line.get(0) != null ? line.get(0) : "");
-            String ixpr = (line.size() > 1 && line.get(1) != null ? line.get(1) : "");
+            String ixnm = (line.size() > columnName && line.get(columnName) != null ? line.get(columnName) : "");
+            String ixpr = (line.size() > columnPattern && line.get(columnPattern) != null ? line.get(columnPattern) : "");
 
             if (ixnm.isEmpty() || ixpr.isEmpty()) {continue;}
             if (numberRanges.has(ixnm)) {continue;}
 
-            String ixst = (line.size() > 2 && line.get(2) != null ? line.get(2) : "");
+            String ixst = (line.size() > columnStart && line.get(columnStart) != null ? line.get(columnStart) : "");
             long lxst = (ixst == "" ? 0L : Long.parseLong(ixst));
             lxst = (lxst < 0L ? 0L : lxst);
 
-            String ixid = (line.size() > 3 && line.get(3) != null ? line.get(3) : "");
+            String ixid = (line.size() > columnId && line.get(columnId) != null ? line.get(columnId) : "");
             long lxid = (ixid == "" ? 0L : Long.parseLong(ixid));
 
             JSONObject nrng = new JSONObject();
@@ -84,25 +91,34 @@ public class NumberRange{
             numberRanges.put(nrky, nrng);
         }
     }
-    public static NumberRange
-    init() throws Exception {
+    public static NumberRange init() throws Exception {
         return new NumberRange();
     }
-    public NumberRange
-    with(Object obj) throws Exception {
+    public NumberRange with(Object obj) throws Exception {
         autoText.with(obj);
         return this;
     }
-    public String
-    increment(String name) throws Exception {
+    public String increment(String name) throws Exception {
         return format(name, incrementLong(name));
     }
-    public String
-    current(String name) throws Exception {
+    public void append(String name, String pattern, long start) throws Exception {
+        if(has(name)){throw new Exception("Number range '" + name + "' is exists.");}
+
+        int rwnr = matrix.getRowCount();
+        IStringMatrixModifiable mmtx = matrix.getModifiableCopy(session);
+        mmtx.appendRow();
+        mmtx.setValue(rwnr, columnName, name, false);
+        mmtx.setValue(rwnr, columnPattern, pattern, false);
+        mmtx.setValue(rwnr, columnStart, Long.toString(Math.max(start, 0L)), false);
+        mmtx.commit();
+        matrix.refresh();
+
+        load();
+    }
+    public String current(String name) throws Exception {
         return format(name, currentLong(name));
     }
-    public String
-    format(String name, long count) throws Exception {
+    public String format(String name, long count) throws Exception {
         String rtrn = pattern(name);
         rtrn = (rtrn == "" ? "%N%" : rtrn);
         String cnt = ((Long) count).toString();
@@ -128,26 +144,21 @@ public class NumberRange{
         rtrn = autoText.run(rtrn);
         return rtrn;
     }
-    public boolean
-    has(String id) throws Exception {
+    public boolean has(String id) throws Exception {
         return numberRanges.has(id);
     }
-    public long
-    incrementLong(String name) throws Exception {
+    public long incrementLong(String name) throws Exception {
         return counter(name, true);
     }
-    public long
-    currentLong(String name) throws Exception {
+    public long currentLong(String name) throws Exception {
         return counter(name, false);
     }
-    public String
-    pattern(String name) throws Exception {
+    public String pattern(String name) throws Exception {
         if(!has(name)){throw new Exception("Number range '" + name + "' not found.");}
         JSONObject nrng = (JSONObject) numberRanges.get(name);
         return (nrng.has("pattern") ? nrng.getString("pattern") : "");
     }
-    public long
-    counter(String name, boolean incr) throws Exception {
+    public long counter(String name, boolean incr) throws Exception {
         if(!has(name)){throw new Exception("Number range '" + name + "' not found.");}
         JSONObject nrng = (JSONObject) numberRanges.get(name);
         if(!nrng.has("id") || nrng.getLong("id") == 0L){throw new Exception("Number range '" + name + "' id info not found.");}
@@ -172,13 +183,11 @@ public class NumberRange{
 
         return rtrn;
     }
-    public long
-    longId(String text) throws Exception {
+    public long longId(String text) throws Exception {
         byte[] md5hex = MessageDigest.getInstance("MD5").digest(text.getBytes());
         return (new BigInteger(bytesToHex(md5hex), 16)).longValue();
     }
-    public String
-    bytesToHex(byte[] bytes) {
+    public String bytesToHex(byte[] bytes) {
         char[] hexArray = "0123456789ABCDEF".toCharArray();
         char[] hexChars = new char[bytes.length * 2];
         for (int j = 0; j < bytes.length; j++) {

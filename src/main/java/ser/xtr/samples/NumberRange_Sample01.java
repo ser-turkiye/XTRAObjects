@@ -19,6 +19,9 @@ public class NumberRange_Sample01 extends UnifiedAgent {
             String counterName = XTRObjects.autoText().with(infObj).run("Transmittal_Out.{ccmPRJCard_code}");
 
             NumberRange nr = new NumberRange();
+            if(!nr.has(counterName)){
+                nr.append(counterName, "TO-{ccmPRJCard_code}-%yy%-%N8%-%yyyy%-%MM%", 1000);
+            }
             nr.with(infObj);
             for (var i = 0; i < 50; i++){
                 String lval = nr.increment(counterName);
