@@ -4,11 +4,13 @@ import com.ser.blueline.IDocumentServer;
 import com.ser.blueline.ISession;
 import com.ser.blueline.metaDataComponents.IStringMatrix;
 import com.ser.blueline.modifiablemetadata.IStringMatrixModifiable;
+import com.spire.ms.System.Exception;
 import org.json.JSONObject;
 import ser.xtr.XTRObjects;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -99,7 +101,11 @@ public class NumberRange{
         return this;
     }
     public String increment(String name) throws Exception {
-        return format(name, incrementLong(name));
+        try {
+            return format(name, incrementLong(name));
+        } catch (java.lang.Exception e) {
+            throw new Exception(e.toString());
+        }
     }
     public void append(String name, String pattern, long start) throws Exception {
         if(has(name)){throw new Exception("Number range '" + name + "' is exists.");}
@@ -116,9 +122,13 @@ public class NumberRange{
         load();
     }
     public String current(String name) throws Exception {
-        return format(name, currentLong(name));
+        try {
+            return format(name, currentLong(name));
+        } catch (java.lang.Exception e) {
+            throw new Exception(e.toString());
+        }
     }
-    public String format(String name, long count) throws Exception {
+    public String format(String name, long count) throws java.lang.Exception {
         String rtrn = pattern(name);
         rtrn = (rtrn == "" ? "%N%" : rtrn);
         String cnt = ((Long) count).toString();
@@ -183,8 +193,13 @@ public class NumberRange{
 
         return rtrn;
     }
-    public long longId(String text) throws Exception {
-        byte[] md5hex = MessageDigest.getInstance("MD5").digest(text.getBytes());
+    public long longId(String text) throws Exception{
+        byte[] md5hex = new byte[0];
+        try {
+            md5hex = MessageDigest.getInstance("MD5").digest(text.getBytes());
+        } catch (NoSuchAlgorithmException e) {
+            throw new Exception(e.toString());
+        }
         return (new BigInteger(bytesToHex(md5hex), 16)).longValue();
     }
     public String bytesToHex(byte[] bytes) {
